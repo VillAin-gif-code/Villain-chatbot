@@ -173,9 +173,10 @@ for sender, message in st.session_state.messages:
         st.image(message)
 
 def send_message_callback():
-    send_message()
-    st.session_state["user_input"] = ""
-
+    if st.session_state.get("user_input", "").strip():
+        send_message()
+        # Clear input AFTER rerun-safe handling
+        st.session_state["clear_input"] = True
 
 col1, col2 = st.columns([10, 1], gap="small")
 with col1:
@@ -184,14 +185,23 @@ with col1:
         placeholder="Type your message here...",
         key="user_input",
         label_visibility="collapsed",
-        help=""
+        help="",
+        on_change=send_message_callback
     )
 with col2:
-    if st.button("➤", key="send_button"):
-        if st.session_state.get("user_input", "").strip():
-            send_message()
-            st.session_state["user_input"] = ""
-            st.rerun()
+    send_clicked = st.button("➤", key="send_button")
+
+# Handle button click separately using same logic
+if send_clicked and st.session_state.get("user_input", "").strip():
+    send_message()
+    st.session_state["clear_input"] = True
+    st.rerun()
+
+# This part clears the textbox safely *after* rerun
+if st.session_state.get("clear_input"):
+    st.session_state["user_input"] = ""
+    st.session_state["clear_input"] = False
+
 
 
 st.markdown("<br><br><center><span style='color:#FFD700;'>Thank you for using the VillAin Chatbot!</span></center>", unsafe_allow_html=True)
