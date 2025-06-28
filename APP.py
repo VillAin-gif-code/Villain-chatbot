@@ -196,12 +196,8 @@ if send_clicked and st.session_state.get("user_input", "").strip():
     send_message()
     st.session_state["clear_input"] = True
     st.rerun()
-
 # This part clears the textbox safely *after* rerun
 if st.session_state.get("clear_input"):
     st.session_state["user_input"] = ""
     st.session_state["clear_input"] = False
-
-
-
 st.markdown("<br><br><center><span style='color:#FFD700;'>Thank you for using the VillAin Chatbot!</span></center>", unsafe_allow_html=True)
