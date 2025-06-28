@@ -121,7 +121,9 @@ def colored_markdown(text, color, bold=False, italic=False):
     st.markdown(f'<span style="{style}">{text}</span>', unsafe_allow_html=True)
 
 def send_message():
-    user_input = st.session_state.get("user_input", "")
+    # Use the correct dynamic key for user input
+    user_input_key = f"user_input_{st.session_state.input_version}"
+    user_input = st.session_state.get(user_input_key, "")
     if user_input:
         # Detect image request
         if "image" in user_input.lower() or "photo" in user_input.lower():
@@ -176,7 +178,8 @@ if "input_version" not in st.session_state:
     st.session_state.input_version = 0
 
 def send_message_callback():
-    if st.session_state.get("user_input", "").strip():
+    user_input_key = f"user_input_{st.session_state.input_version}"
+    if st.session_state.get(user_input_key, "").strip():
         send_message()
         st.session_state.input_version += 1  # Change the key for the next run
 
