@@ -85,11 +85,17 @@ st.markdown(
 )
 
 # Replace with your actual keys
-GEMINI_API_KEY = "AIzaSyCBz9xDiDaY5SmmQj_aMzjr-7WfclTDVmQ"
-UNSPLASH_ACCESS_KEY = "l65wbp05HuCA0BuEuZBAKcuw5WupaoMh5xhMQ4EEms8"
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
+
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash')  # Use the correct model for your API key
+model = genai.GenerativeModel('gemini-2.0-flash') # Use the correct model for your API key
 
 # Initialize chat history in session state
 if "chat" not in st.session_state:
@@ -166,18 +172,20 @@ for sender, message in st.session_state.messages:
     elif sender == "Image":
         st.image(message)
 
+if "input_version" not in st.session_state:
+    st.session_state.input_version = 0
+
 def send_message_callback():
-    user_input = st.session_state["user_input"]
-    if user_input.strip():
+    if st.session_state.get("user_input", "").strip():
         send_message()
-        st.session_state["user_input"] = ""
+        st.session_state.input_version += 1  # Change the key for the next run
 
 col1, col2 = st.columns([10, 1], gap="small")
 with col1:
     user_input = st.text_area(
         "Message",
         placeholder="Type your message here...",
-        key="user_input",
+        key=f"user_input_{st.session_state.input_version}",
         label_visibility="collapsed",
         help="",
         on_change=send_message_callback
@@ -185,10 +193,16 @@ with col1:
 with col2:
     send_clicked = st.button("➤", key="send_button")
 
-if send_clicked:
+if send_clicked and st.session_state.get(f"user_input_{st.session_state.input_version}", "").strip():
     send_message()
-    st.session_state["user_input"] = ""  # Clear the input before rerun
-    st.rerun()  # <--- Use st.rerun() instead of st.experimental_rerun()
+    st.session_state.input_version += 1
+    st.rerun()
 
-# --- Footer ---
+# This part clears the textbox safely *after* rerun
+if st.session_state.get("clear_input"):
+    st.session_state["user_input"] = ""
+    st.session_state["clear_input"] = False
+
+
+
 st.markdown("<br><br><center><span style='color:#FFD700;'>Thank you for using the VillAin Chatbot!</span></center>", unsafe_allow_html=True)
