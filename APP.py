@@ -173,10 +173,9 @@ for sender, message in st.session_state.messages:
         st.image(message)
 
 def send_message_callback():
-    user_input = st.session_state["user_input"]
-    if user_input.strip():
-        send_message()
-        st.session_state["user_input"] = ""
+    send_message()
+    st.session_state["user_input"] = ""
+
 
 col1, col2 = st.columns([10, 1], gap="small")
 with col1:
@@ -190,11 +189,5 @@ with col1:
     )
 with col2:
     send_clicked = st.button("➤", key="send_button")
-
-if send_clicked:
-    send_message()
-    if "user_input" in st.session_state:
-        st.session_state["user_input"] = ""
-    st.rerun()  # Rerun should only happen after clearing input
-# --- Footer ---
+    
 st.markdown("<br><br><center><span style='color:#FFD700;'>Thank you for using the VillAin Chatbot!</span></center>", unsafe_allow_html=True)
