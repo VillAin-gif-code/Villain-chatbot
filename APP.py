@@ -1,11 +1,9 @@
-
 import streamlit as st
 import google.generativeai as genai
 import requests
 
-# --- Custom CSS for background ---
-st.markdown(
-    """
+# --- Custom CSS for background and input styling ---
+st.markdown("""
     <style>
     [data-testid="stAppViewContainer"] {
         position: relative;
@@ -23,7 +21,7 @@ st.markdown(
         z-index: 0;
     }
     .stApp, .stTextInput, .stMarkdown, .stTitle, .stHeader, .stSubheader, .stCaption, .stDataFrame {
-        color: #111 !important;
+        color:  !important;
         position: relative;
         z-index: 1;
         font-size: 22px !important;
@@ -32,17 +30,59 @@ st.markdown(
     html, body, [data-testid="stAppViewContainer"], .stTextInput input, .stMarkdown, .stTitle, .stHeader, .stSubheader, .stCaption, .stDataFrame, .stChatMessageContent {
         font-size: 28px !important;
         font-weight: bold !important;
-        color: #FFD700 !important;           /* Deep yellow text */
-        text-shadow: none !important;         /* No text shadow */
-        letter-spacing: 0.2px !important;     /* Slightly tighter for readability */
-        line-height: 1.3 !important;          /* Good line height for clarity */
+        color: #FFD700 !important;
+        text-shadow: none !important;
+        letter-spacing: 0.2px !important;
+        line-height: 1.3 !important;
     }
+    .stTextInput input, .stTextArea textarea {
+        color: #111 !important;
+        background: #fff !important;
+    }
+    .stButton button {
+        background-color: #FFD700 !important;
+        color: #111 !important;
+        font-weight: bold !important;
+        font-size: 22px !important;
+        border-radius: 8px !important;
+        padding: 0.5em 2em !important;
+    }
+    /* Hide the Ctrl+Enter message */
+    div[data-testid="stTextArea"] div[role="alert"] {
+        display: none !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+st.title("VillAin Chatbot")
+
+# Sidebar for text size (hidden like a toolbar)
+with st.sidebar:
+    size = st.selectbox(
+        "Choose text size:",
+        ("Small", "Medium", "Large", "Extra Large"),
+        index=1
+    )
+
+size_map = {
+    "Small": "18px",
+    "Medium": "22px",
+    "Large": "28px",
+    "Extra Large": "36px"
+}
+
+st.markdown(
+    f"""
+    <style>
+    html, body, [data-testid="stAppViewContainer"], .stTextInput input, .stTextArea textarea, .stMarkdown, .stTitle, .stHeader, .stSubheader, .stCaption, .stDataFrame, .stChatMessageContent {{
+        font-size: {size_map[size]} !important;
+        font-weight: bold !important;
+        color: #111 !important;
+    }}
     </style>
     """,
     unsafe_allow_html=True
 )
-
-st.title("VillAin Chatbot")
 
 # Replace with your actual keys
 from dotenv import load_dotenv
@@ -55,7 +95,7 @@ UNSPLASH_ACCESS_KEY = os.getenv("UNSPLASH_ACCESS_KEY")
 
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash')
+model = genai.GenerativeModel('gemini-2.0-flash') # Use the correct model for your API key
 
 # Initialize chat history in session state
 if "chat" not in st.session_state:
@@ -81,7 +121,7 @@ def colored_markdown(text, color, bold=False, italic=False):
     st.markdown(f'<span style="{style}">{text}</span>', unsafe_allow_html=True)
 
 def send_message():
-    user_input = st.session_state.user_input
+    user_input = st.session_state.get("user_input", "")
     if user_input:
         # Detect image request
         if "image" in user_input.lower() or "photo" in user_input.lower():
@@ -97,7 +137,6 @@ def send_message():
             response = st.session_state.chat.send_message(user_input)
             st.session_state.messages.append(("Villain", user_input))
             st.session_state.messages.append(("AI Sidekick", response.text))
-        st.session_state.user_input = ""  # This is safe inside the callback
 
 def formatted_markdown(line):
     stripped = line.strip()
@@ -121,7 +160,7 @@ def formatted_markdown(line):
         cleaned = stripped.replace("*", "")
         colored_markdown(cleaned, "#FFD700")
 
-# --- Display chat history (chatbox at the top, input at the bottom) ---
+# --- Display chat history (chatbox at the top, input in the middle) ---
 for sender, message in st.session_state.messages:
     if sender == "Villain":
         colored_markdown(f"Villain: {message}", "#00FF00", bold=True)
@@ -133,34 +172,29 @@ for sender, message in st.session_state.messages:
     elif sender == "Image":
         st.image(message)
 
-# --- Input box at the bottom ---
-st.text_input("Villain:", key="user_input", on_change=send_message)
+def send_message_callback():
+    user_input = st.session_state["user_input"]
+    if user_input.strip():
+        send_message()
+        st.session_state["user_input"] = ""
 
-# --- Text size selection ---
-size = st.selectbox(
-    "Choose text size:",
-    ("Small", "Medium", "Large", "Extra Large"),
-    index=1
-)
+col1, col2 = st.columns([10, 1], gap="small")
+with col1:
+    user_input = st.text_area(
+        "Message",
+        placeholder="Type your message here...",
+        key="user_input",
+        label_visibility="collapsed",
+        help="",
+        on_change=send_message_callback
+    )
+with col2:
+    send_clicked = st.button("➤", key="send_button")
 
-size_map = {
-    "Small": "18px",
-    "Medium": "22px",
-    "Large": "28px",
-    "Extra Large": "36px"
-}
+if send_clicked:
+    send_message()
+    st.session_state["user_input"] = ""  # Clear the input before rerun
+    st.rerun()  # <--- Use st.rerun() instead of st.experimental_rerun()
 
-st.markdown(
-    f"""
-    <style>
-    html, body, [data-testid="stAppViewContainer"], .stTextInput input, .stMarkdown, .stTitle, .stHeader, .stSubheader, .stCaption, .stDataFrame, .stChatMessageContent {{
-        font-size: {size_map[size]} !important;
-        font-weight: bold !important;
-        color: #111 !important;
-    }}
-    </style>
-    """,
-    unsafe_allow_html=True
-)
-
-st.markdown("**Thank you for using the VillAin Chatbot!**")
+# --- Footer ---
+st.markdown("<br><br><center><span style='color:#FFD700;'>Thank you for using the VillAin Chatbot!</span></center>", unsafe_allow_html=True)
