@@ -193,8 +193,8 @@ with col2:
 
 if send_clicked:
     send_message()
-    st.session_state["user_input"] = ""  # Clear the input before rerun
-    st.rerun()  # <--- Use st.rerun() instead of st.experimental_rerun()
-
+    if "user_input" in st.session_state:
+        st.session_state["user_input"] = ""
+    st.rerun()  # Rerun should only happen after clearing input
 # --- Footer ---
 st.markdown("<br><br><center><span style='color:#FFD700;'>Thank you for using the VillAin Chatbot!</span></center>", unsafe_allow_html=True)
