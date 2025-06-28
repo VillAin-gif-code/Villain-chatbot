@@ -184,10 +184,14 @@ with col1:
         placeholder="Type your message here...",
         key="user_input",
         label_visibility="collapsed",
-        help="",
-        on_change=send_message_callback
+        help=""
     )
 with col2:
-    send_clicked = st.button("➤", key="send_button")
-    
+    if st.button("➤", key="send_button"):
+        if st.session_state.get("user_input", "").strip():
+            send_message()
+            st.session_state["user_input"] = ""
+            st.rerun()
+
+
 st.markdown("<br><br><center><span style='color:#FFD700;'>Thank you for using the VillAin Chatbot!</span></center>", unsafe_allow_html=True)
